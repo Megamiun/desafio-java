@@ -5,7 +5,6 @@ import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.Entity
 import javax.persistence.Id
-import javax.persistence.OneToMany
 
 @Entity
 data class User(
@@ -16,5 +15,5 @@ data class User(
     var name: String? = null,
     var email: String? = null,
     var password: String? = null,
-    var token: String? = null,
-    @OneToMany private var phones: List<Phone> = listOf())
+    var token: String? = null
+)

@@ -1,5 +1,6 @@
 package br.com.gabryel.logineer.dto
 
+import br.com.gabryel.logineer.entities.User
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonUnwrapped
 import java.time.LocalDate
@@ -14,15 +15,13 @@ data class UserTokenDto @JvmOverloads constructor(
     var lastLogin: LocalDateTime? = null,
     var token: String? = null
 ) {
-    constructor(
-        id: String? = null,
-        created: LocalDate? = null,
-        modified: LocalDate? = null,
-        lastLogin: LocalDateTime? = null,
-        token: String? = null,
-        userDto: UserDto
-    ) : this(id, created, modified, lastLogin, token) {
-        user = userDto
+    companion object {
+        @JvmStatic
+        fun of(user: User, userDto: UserDto): UserTokenDto {
+            val tokenDto = UserTokenDto(user.id, user.created, user.modified, user.lastLogin, user.token)
+            tokenDto.user = userDto.copy(password = null)
+            return tokenDto
+        }
     }
 
     @field:JsonUnwrapped

@@ -2,9 +2,10 @@ package br.com.gabryel.logineer.controller;
 
 import br.com.gabryel.logineer.LogineerApplication;
 import br.com.gabryel.logineer.dto.UserDto;
-import br.com.gabryel.logineer.dto.UserTokenDto;
 import br.com.gabryel.logineer.entities.User;
+import br.com.gabryel.logineer.repository.PhoneRepository;
 import br.com.gabryel.logineer.repository.UserRepository;
+import br.com.gabryel.logineer.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.kotlin.KotlinModule;
@@ -18,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -41,10 +41,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class LoginControllerIT {
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private UserRepository phoneRepository;
+    private PhoneRepository phoneRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -84,8 +87,8 @@ public class LoginControllerIT {
                 .content(getText("joao-da-silva.json")))
             .andExpect(jsonPath("name", is("João da Silva")))
             .andExpect(jsonPath("email", is("joao@silva.org")))
-            .andExpect(jsonPath("phones[1].number", is("987654321")))
-            .andExpect(jsonPath("phones[1].ddd", is("21")));
+            .andExpect(jsonPath("phones[0].number", is("987654321")))
+            .andExpect(jsonPath("phones[0].ddd", is("21")));
     }
 
     @Test
@@ -99,7 +102,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnUserDtoWithRepeatedEmail_whenRequestedCreation_thenReturnsNotAcceptable() throws Exception {
-        userRepository.save(createBaseUser("Jão", "joao@silva.org", "myPass"));
+        registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             put("/api/user")
@@ -110,7 +113,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnUserDtoWithRepeatedEmail_whenRequestedCreation_thenReturnsAlreadyExistingEmailMessage() throws Exception {
-        userRepository.save(createBaseUser("Jão", "joao@silva.org", "myPass"));
+        registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             put("/api/user")
@@ -146,8 +149,8 @@ public class LoginControllerIT {
                 .content(getText("joao-da-silva-login.json")))
             .andExpect(jsonPath("name", is("João da Silva")))
             .andExpect(jsonPath("email", is("joao@silva.org")))
-            .andExpect(jsonPath("phones[1].number", is("987654321")))
-            .andExpect(jsonPath("phones[1].ddd", is("21")))
+            .andExpect(jsonPath("phones[0].number", is("987654321")))
+            .andExpect(jsonPath("phones[0].ddd", is("21")))
             .andExpect(jsonPath("token", is("MyToken")))
             .andExpect(jsonPath("created", is("2018-05-25")))
             .andExpect(jsonPath("modified", is("2018-05-25")))
@@ -156,8 +159,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnLoginDtoOfAnUser_whenRequestedLogin_thenDontReturnPassword() throws Exception {
-        User user = createBaseUser("Jão", "joao@silva.org", "myPass");
-        userRepository.save(user);
+        registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             post("/api/login")
@@ -168,8 +170,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnLoginDtoOfAnUserWithWrongPassword_whenRequestedLogin_thenReturnsInvalidUserMessage() throws Exception {
-        User user = createBaseUser("João", "joao@silva.org", "hunter2");
-        userRepository.save(user);
+        registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             post("/api/login")
@@ -180,8 +181,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnLoginDtoOfAnUserWithWrongPassword_whenRequestedLogin_thenReturnsUnauthorized() throws Exception {
-        User user = createBaseUser("João", "joao@silva.org", "hunter2");
-        userRepository.save(user);
+        registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             post("/api/login")
@@ -210,8 +210,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndNoToken_whenRequestedProfile_thenReturnsUnauthorized() throws Exception {
-        User user = createBaseUser("João", "joao@silva.org", "hunter2");
-        userRepository.save(user);
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc
             .perform(get("/api/user/" + user.getId()))
@@ -220,8 +219,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndNoToken_whenRequestedProfile_thenReturnsUnauthorizedMessage() throws Exception {
-        User user = createBaseUser("João", "joao@silva.org", "hunter2");
-        userRepository.save(user);
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc
             .perform(get("/api/user/" + user.getId()))
@@ -230,8 +228,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndInvalidToken_whenRequestedProfile_thenReturnsUnauthorized() throws Exception {
-        User user = createBaseUser("João", "joao@silva.org", "hunter2");
-        userRepository.save(user);
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
@@ -242,8 +239,7 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndInvalidToken_whenRequestedProfile_thenReturnsUnauthorizedMessage() throws Exception {
-        User user = createBaseUser("João", "joao@silva.org", "hunter2");
-        userRepository.save(user);
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
@@ -254,22 +250,20 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndTokenWithLastLoginTooOld_whenRequestedProfile_thenReturnsUnauthorized() throws Exception {
-        UserTokenDto token = registerUserFromFile("joao-da-silva.json");
-        User user = userRepository.getOne(token.getId());
+        User user = registerUserFromFile("joao-da-silva.json");
         user.setLastLogin(user.getLastLogin().minusMinutes(31));
         userRepository.save(user);
 
         mockMvc.perform(
-            get("/api/user/" + token.getId())
-                .header("access_token", token.getToken())
+            get("/api/user/" + user.getId())
+                .header("access_token", user.getToken())
                 .header("token_type", "Bearer"))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
     public void givenAnIdOnPathAndTokenWithLastLoginTooOld_whenRequestedProfile_thenReturnsInvalidSessionMessage() throws Exception {
-        UserTokenDto token = registerUserFromFile("joao-da-silva.json");
-        User user = userRepository.getOne(token.getId());
+        User user = registerUserFromFile("joao-da-silva.json");
         user.setLastLogin(user.getLastLogin().minusMinutes(31));
         userRepository.save(user);
 
@@ -282,16 +276,16 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndToken_whenRequestedProfile_thenReturnsProfile() throws Exception {
-        UserTokenDto token = registerUserFromFile("joao-da-silva.json");
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
-            get("/api/user/" + token.getId())
-                .header("access_token", token.getToken())
+            get("/api/user/" + user.getId())
+                .header("access_token", user.getToken())
                 .header("token_type", "Bearer"))
             .andExpect(jsonPath("name", is("João da Silva")))
             .andExpect(jsonPath("email", is("joao@silva.org")))
-            .andExpect(jsonPath("phones[1].number", is("987654321")))
-            .andExpect(jsonPath("phones[1].ddd", is("21")))
+            .andExpect(jsonPath("phones[0].number", is("987654321")))
+            .andExpect(jsonPath("phones[0].ddd", is("21")))
             .andExpect(jsonPath("created", is("2018-05-25")))
             .andExpect(jsonPath("modified", is("2018-05-25")))
             .andExpect(jsonPath("last_login", is("2018-05-25")));
@@ -299,31 +293,26 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnIdOnPathAndToken_whenRequestedProfile_thenReturnsOk() throws Exception {
-        UserTokenDto token = registerUserFromFile("joao-da-silva.json");
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
-            get("/api/user/" + token.getId())
-                .header("access_token", token.getToken())
+            get("/api/user/" + user.getId())
+                .header("access_token", user.getToken())
                 .header("token_type", "Bearer"))
             .andExpect(status().isOk());
     }
 
-    private UserTokenDto registerUserFromFile(String fileName) throws Exception {
-        MvcResult result = mockMvc.perform(
-            put("/api/user")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(getText(fileName)))
-            .andReturn();
-
+    private User registerUserFromFile(String fileName) throws Exception {
         ObjectMapper mapper = new ObjectMapper()
             .registerModule(new KotlinModule())
             .registerModule(new JavaTimeModule());
-        return mapper.readValue(result.getResponse().getContentAsString(), UserTokenDto.class);
+
+        UserDto userDto = mapper.readValue(getText(fileName), UserDto.class);
+        return userService.register(userDto);
     }
 
     private User createBaseUser(String name, String email, String password) {
-        String encoded = passwordEncoder.encode(password);
-        return new UserDto(name, email, encoded).toUser();
+        return userService.convertToUser(new UserDto(name, email, password));
     }
 
     private String getText(String resourceName) throws IOException, URISyntaxException {

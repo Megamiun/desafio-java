@@ -3,14 +3,12 @@ package br.com.gabryel.logineer.controller;
 import br.com.gabryel.logineer.dto.LoginDto;
 import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.dto.UserTokenDto;
+import br.com.gabryel.logineer.entities.User;
+import br.com.gabryel.logineer.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("api")
@@ -18,13 +16,17 @@ public class LoginController {
 
     private static Logger log = LoggerFactory.getLogger(LoginController.class);
 
+    private final UserService userService;
+
+    public LoginController(UserService userService) {
+        this.userService = userService;
+    }
+
     @PutMapping("user")
     public ResponseEntity<UserTokenDto> createUser(@RequestBody UserDto userDto) {
-        log.info(userDto.toString());
-        LocalDateTime now = LocalDateTime.now();
-        LocalDate today = now.toLocalDate();
-        String uuid = UUID.randomUUID().toString();
-        return ResponseEntity.ok(new UserTokenDto(uuid, today, today, now, uuid, userDto));
+        User user = userService.register(userDto);
+
+        return ResponseEntity.ok(UserTokenDto.of(user, userDto));
     }
 
     @PostMapping("login")
