@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<user>
+    <name>João da Silva</name>
+    <email>joao@silva.org</email>
+    <password>hunter2</password>
+    <phones>
+        <phone>
+            <ddd>21</ddd>
+            <number>987654321</number>
+        </phone>
+    </phones>
+</user>

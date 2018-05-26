@@ -1,18 +1,19 @@
 package br.com.gabryel.logineer.dto
 
-import com.fasterxml.jackson.annotation.JsonAlias
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonUnwrapped
 import java.time.LocalDate
+import java.time.LocalDateTime
 
-data class UserTokenDTO(
+data class UserTokenDto(
     var id: String,
     var created: LocalDate,
     var modified: LocalDate,
 
-    @field:JsonAlias("last_login")
-    var lastLogin: LocalDate,
+    @JsonProperty("last_login")
+    var lastLogin: LocalDateTime,
     var token: String,
 
-    @field:JsonUnwrapped
-    var user: UserDTO
+    @JsonUnwrapped
+    var user: UserDto
 )

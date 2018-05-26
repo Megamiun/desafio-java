@@ -1,6 +1,7 @@
 package br.com.gabryel.logineer.entities
 
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.util.*
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -8,11 +9,12 @@ import javax.persistence.OneToMany
 
 @Entity
 data class User(
-    @field:Id val id: String = UUID.randomUUID().toString(),
-    val created: LocalDate? = null,
-    val modified: LocalDate? = null,
-    val lastLogin: LocalDate? = null,
-    val name: String? = null,
-    val email: String? = null,
-    val password: String? = null,
-    @field:OneToMany private val phones: List<Phone> = listOf())
+    @Id val id: String = UUID.randomUUID().toString(),
+    var created: LocalDate? = null,
+    var modified: LocalDate? = null,
+    var lastLogin: LocalDateTime? = null,
+    var name: String? = null,
+    var email: String? = null,
+    var password: String? = null,
+    var token: String? = null,
+    @OneToMany private var phones: List<Phone> = listOf())
