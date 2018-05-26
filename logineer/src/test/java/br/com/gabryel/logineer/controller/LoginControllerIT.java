@@ -1,5 +1,6 @@
 package br.com.gabryel.logineer.controller;
 
+import br.com.gabryel.logineer.LogineerApplication;
 import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.entities.User;
 import br.com.gabryel.logineer.repository.UserRepository;
@@ -7,14 +8,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.TestContext;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -33,12 +32,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = {TestContext.class})
-@WebAppConfiguration
-public class LoginControllerTest {
-
-    @Autowired
-    private WebApplicationContext webAppContext;
+@SpringBootTest(classes = LogineerApplication.class)
+@AutoConfigureMockMvc
+public class LoginControllerIT {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -49,6 +45,7 @@ public class LoginControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
     private MockMvc mockMvc;
 
     @Before
@@ -57,6 +54,7 @@ public class LoginControllerTest {
         userRepository.deleteAll();
     }
 
+    @Test
     public void givenXmlContentHeader_whenRequestedCreation_thenReturnsUnsupportedMediaType() throws Exception {
         mockMvc.perform(
             put("/api/user")
@@ -117,6 +115,7 @@ public class LoginControllerTest {
             .andExpect(jsonPath("mensagem", is("E-mail já existente")));
     }
 
+    @Test
     public void givenXmlContentHeader_whenRequestedLogin_thenReturnsUnsupportedMediaType() throws Exception {
         mockMvc.perform(
             post("/api/login")
