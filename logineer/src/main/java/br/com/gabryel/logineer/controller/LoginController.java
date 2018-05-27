@@ -7,18 +7,17 @@ import br.com.gabryel.logineer.entities.Phone;
 import br.com.gabryel.logineer.entities.User;
 import br.com.gabryel.logineer.service.PhoneService;
 import br.com.gabryel.logineer.service.UserService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 
 @RestController
 @RequestMapping("api")
 public class LoginController {
 
-    private static Logger log = LoggerFactory.getLogger(LoginController.class);
+    private static final String AUTH_HEADER = "Authorization";
 
     private final PhoneService phoneService;
 
@@ -45,10 +44,10 @@ public class LoginController {
     }
 
     @GetMapping("user/{id}")
-    public ResponseEntity<UserTokenDto> getUser(@PathVariable String id) {
-        log.info(id);
+    public ResponseEntity<UserTokenDto> getUser(@PathVariable String id, HttpServletRequest request) {
+        User user = userService.getUser(id, request.getHeader(AUTH_HEADER));
+        List<Phone> phones = phoneService.getPhones(user);
 
-        UserDto userDto = new UserDto("unnamed", "anon@gmail.com", "anon");
-        return createUser(userDto);
+        return ResponseEntity.ok(UserTokenDto.of(user, phones));
     }
 }

@@ -9,7 +9,7 @@ public interface UserService {
 
     User login(String email, String password);
 
-    User getUser(Long id, String token);
+    User getUser(String id, String token);
 
     User convertToUser(UserDto userDto);
 }

@@ -5,6 +5,7 @@ import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.entities.User;
 import br.com.gabryel.logineer.repository.PhoneRepository;
 import br.com.gabryel.logineer.repository.UserRepository;
+import br.com.gabryel.logineer.service.TimeProvider;
 import br.com.gabryel.logineer.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -15,6 +16,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -31,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 
 import static org.hamcrest.Matchers.is;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,6 +42,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = LogineerApplication.class)
 @AutoConfigureMockMvc
 public class LoginControllerIT {
+
+    @MockBean
+    private TimeProvider timeProvider;
 
     @Autowired
     private UserService userService;
@@ -59,6 +65,10 @@ public class LoginControllerIT {
     public void clean() {
         phoneRepository.deleteAll();
         userRepository.deleteAll();
+
+        LocalDate date = LocalDate.of(2018, Month.MAY, 25);
+        LocalDateTime time = date.atTime(12, 12);
+        when(timeProvider.now()).thenReturn(time);
     }
 
     @Test
@@ -133,15 +143,10 @@ public class LoginControllerIT {
 
     @Test
     public void givenAnLoginDtoOfAnUser_whenRequestedLogin_thenReturnsUserInfo() throws Exception {
-        LocalDate date = LocalDate.of(2018, Month.MAY, 25);
-        LocalDateTime time = date.atStartOfDay();
+        User user = registerUserFromFile("joao-da-silva.json");
 
-        User user = createBaseUser("Jão", "joao@silva.org", "hunter2");
-        user.setToken("MyToken");
-        user.setCreated(date);
-        user.setModified(date);
-        user.setLastLogin(time);
-        userRepository.save(user);
+        when(timeProvider.now())
+            .thenReturn(LocalDateTime.of(2018, Month.MAY, 25, 12, 43));
 
         mockMvc.perform(
             post("/api/login")
@@ -151,10 +156,11 @@ public class LoginControllerIT {
             .andExpect(jsonPath("email", is("joao@silva.org")))
             .andExpect(jsonPath("phones[0].number", is("987654321")))
             .andExpect(jsonPath("phones[0].ddd", is("21")))
-            .andExpect(jsonPath("token", is("MyToken")))
             .andExpect(jsonPath("created", is("2018-05-25")))
             .andExpect(jsonPath("modified", is("2018-05-25")))
-            .andExpect(jsonPath("last_login", is("2018-05-25")));
+            .andExpect(jsonPath("last_login", is("2018-05-25T12:43:00")))
+            .andExpect(jsonPath("token", is(user.getToken())))
+            .andExpect(jsonPath("id", is(user.getId())));
     }
 
     @Test
@@ -232,8 +238,7 @@ public class LoginControllerIT {
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("access_token", "invalid_token")
-                .header("token_type", "Bearer"))
+                .header("Authorization", "Bearer I-m-a-bear"))
             .andExpect(status().isUnauthorized());
     }
 
@@ -243,66 +248,90 @@ public class LoginControllerIT {
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("access_token", "invalid_token")
-                .header("token_type", "Bearer"))
+                .header("Authorization", "Bearer I-m-a-bear"))
             .andExpect(jsonPath("mensagem", is("Não autorizado")));
     }
 
     @Test
     public void givenAnIdOnPathAndTokenWithLastLoginTooOld_whenRequestedProfile_thenReturnsUnauthorized() throws Exception {
         User user = registerUserFromFile("joao-da-silva.json");
-        user.setLastLogin(user.getLastLogin().minusMinutes(31));
-        userRepository.save(user);
+
+        when(timeProvider.now())
+            .thenReturn(LocalDateTime.of(2018, Month.MAY, 25, 12, 43));
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("access_token", user.getToken())
-                .header("token_type", "Bearer"))
+                .header("Authorization", "Bearer I-m-a-bear"))
             .andExpect(status().isUnauthorized());
     }
 
     @Test
     public void givenAnIdOnPathAndTokenWithLastLoginTooOld_whenRequestedProfile_thenReturnsInvalidSessionMessage() throws Exception {
         User user = registerUserFromFile("joao-da-silva.json");
-        user.setLastLogin(user.getLastLogin().minusMinutes(31));
-        userRepository.save(user);
+
+        when(timeProvider.now())
+            .thenReturn(LocalDateTime.of(2018, Month.MAY, 25, 12, 43));
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("access_token", user.getToken())
-                .header("token_type", "Bearer"))
-            .andExpect(jsonPath("mensagem", is("Sessão Inválida")));
+                .header("Authorization", "Bearer " + user.getToken()))
+            .andExpect(jsonPath("mensagem", is("Sessão inválida")));
     }
 
     @Test
     public void givenAnIdOnPathAndToken_whenRequestedProfile_thenReturnsProfile() throws Exception {
         User user = registerUserFromFile("joao-da-silva.json");
 
+        when(timeProvider.now())
+            .thenReturn(LocalDateTime.of(2018, Month.MAY, 25, 12, 20));
+
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("access_token", user.getToken())
-                .header("token_type", "Bearer"))
+                .header("Authorization", "Bearer " + user.getToken()))
             .andExpect(jsonPath("name", is("João da Silva")))
             .andExpect(jsonPath("email", is("joao@silva.org")))
             .andExpect(jsonPath("phones[0].number", is("987654321")))
             .andExpect(jsonPath("phones[0].ddd", is("21")))
             .andExpect(jsonPath("created", is("2018-05-25")))
             .andExpect(jsonPath("modified", is("2018-05-25")))
-            .andExpect(jsonPath("last_login", is("2018-05-25")));
+            .andExpect(jsonPath("last_login", is("2018-05-25T12:12:00")));
     }
 
     @Test
     public void givenAnIdOnPathAndToken_whenRequestedProfile_thenReturnsOk() throws Exception {
         User user = registerUserFromFile("joao-da-silva.json");
 
+        when(timeProvider.now())
+            .thenReturn(LocalDateTime.of(2018, Month.MAY, 25, 12, 20));
+
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("access_token", user.getToken())
-                .header("token_type", "Bearer"))
+                .header("Authorization", "Bearer " + user.getToken()))
             .andExpect(status().isOk());
     }
 
-    private User registerUserFromFile(String fileName) throws Exception {
+    /**
+     * Creates a basic user, with the password correctly transformed already.
+     *
+     * @param name     Name of the user
+     * @param email    Email of the user
+     * @param password Password of the user
+     * @return Instance of user
+     */
+    private User createBaseUser(String name, String email, String password) {
+        return userService.convertToUser(new UserDto(name, email, password));
+    }
+
+    /**
+     * Register user given on file on the day 2018-05-25 at 12:12, created to help
+     * testing last login status.
+     *
+     * @param fileName Name of the file to load
+     * @return User entity registered at the system
+     * @throws IOException        see {@link LoginControllerIT#getText}
+     * @throws URISyntaxException see {@link LoginControllerIT#getText}
+     */
+    private User registerUserFromFile(String fileName) throws IOException, URISyntaxException {
         ObjectMapper mapper = new ObjectMapper()
             .registerModule(new KotlinModule())
             .registerModule(new JavaTimeModule());
@@ -311,10 +340,13 @@ public class LoginControllerIT {
         return userService.register(userDto);
     }
 
-    private User createBaseUser(String name, String email, String password) {
-        return userService.convertToUser(new UserDto(name, email, password));
-    }
-
+    /**
+     * @param resourceName Name of the resource to be loaded
+     *
+     * @return String content of the resource
+     * @throws IOException In case there is an error reading the Stream
+     * @throws URISyntaxException If the string to the file is not properly formatted
+     */
     private String getText(String resourceName) throws IOException, URISyntaxException {
         Path path = Paths.get(getClass().getResource(resourceName).toURI());
         return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
