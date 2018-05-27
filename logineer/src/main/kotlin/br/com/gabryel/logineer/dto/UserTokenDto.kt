@@ -2,11 +2,13 @@ package br.com.gabryel.logineer.dto
 
 import br.com.gabryel.logineer.entities.Phone
 import br.com.gabryel.logineer.entities.User
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.annotation.JsonUnwrapped
 import java.time.LocalDate
 import java.time.LocalDateTime
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class UserTokenDto @JvmOverloads constructor(
     var id: String? = null,
     var created: LocalDate? = null,
