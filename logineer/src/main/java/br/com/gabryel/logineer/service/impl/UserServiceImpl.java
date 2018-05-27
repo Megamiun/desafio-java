@@ -2,6 +2,7 @@ package br.com.gabryel.logineer.service.impl;
 
 import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.entities.User;
+import br.com.gabryel.logineer.exceptions.LogineerException;
 import br.com.gabryel.logineer.repository.UserRepository;
 import br.com.gabryel.logineer.service.PhoneService;
 import br.com.gabryel.logineer.service.TimeProvider;
@@ -34,9 +35,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User register(UserDto userDto) {
+    public User register(UserDto userDto) throws LogineerException {
         if (userRepository.existsByEmail(userDto.getEmail())) {
-            throw new IllegalArgumentException("E-mail já existente");
+            throw unacceptableException("E-mail já existente");
         }
 
         User user = userRepository.save(convertToUser(userDto));
@@ -47,10 +48,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User login(String email, String password) {
+    public User login(String email, String password) throws LogineerException {
         Optional<User> optionalUser = userRepository.getByEmail(email);
         if (!optionalUser.isPresent() || !encoder.matches(password, optionalUser.get().getPassword())) {
-            throw new IllegalArgumentException("Usuário e/ou senha inválidos");
+            throw authenticationException("Usuário e/ou senha inválidos");
         }
 
         User user = optionalUser.get();
@@ -59,16 +60,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User getUser(String id, String token) {
+    public User getUser(String id, String token) throws LogineerException {
         User user = userRepository.findById(id)
-            .orElseThrow(() -> new IllegalArgumentException("Não autorizado"));
+            .orElseThrow(() -> authenticationException("Não autorizado"));
 
         if (!isTokenValid(token, user)) {
-            throw new IllegalArgumentException("Não autorizado");
+            throw authenticationException("Não autorizado");
         }
 
         if (isSessionExpired(user)) {
-            throw new IllegalArgumentException("Sessão inválida");
+            throw authenticationException("Sessão inválida");
         }
 
         return user;
@@ -104,5 +105,13 @@ public class UserServiceImpl implements UserService {
 
         return new User(uuid, today, today, now, userDto.getName(),
             userDto.getEmail(), password, uuid);
+    }
+
+    private LogineerException unacceptableException(String message) {
+        return new LogineerException(LogineerException.ErrorType.UNACCEPTABLE, message);
+    }
+
+    private LogineerException authenticationException(String message) {
+        return new LogineerException(LogineerException.ErrorType.AUTHENTICATION, message);
     }
 }

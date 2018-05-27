@@ -5,6 +5,7 @@ import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.dto.UserTokenDto;
 import br.com.gabryel.logineer.entities.Phone;
 import br.com.gabryel.logineer.entities.User;
+import br.com.gabryel.logineer.exceptions.LogineerException;
 import br.com.gabryel.logineer.service.PhoneService;
 import br.com.gabryel.logineer.service.UserService;
 import org.springframework.http.ResponseEntity;
@@ -29,14 +30,14 @@ public class LoginController {
     }
 
     @PutMapping("user")
-    public ResponseEntity<UserTokenDto> createUser(@RequestBody UserDto userDto) {
+    public ResponseEntity<UserTokenDto> createUser(@RequestBody UserDto userDto) throws LogineerException {
         User user = userService.register(userDto);
 
         return ResponseEntity.ok(UserTokenDto.of(user, userDto));
     }
 
     @PostMapping("login")
-    public ResponseEntity<UserTokenDto> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<UserTokenDto> login(@RequestBody LoginDto loginDto) throws LogineerException {
         User user = userService.login(loginDto.getEmail(), loginDto.getPassword());
         List<Phone> phones = phoneService.getPhones(user);
 
@@ -44,7 +45,7 @@ public class LoginController {
     }
 
     @GetMapping("user/{id}")
-    public ResponseEntity<UserTokenDto> getUser(@PathVariable String id, HttpServletRequest request) {
+    public ResponseEntity<UserTokenDto> getUser(@PathVariable String id, HttpServletRequest request) throws LogineerException {
         User user = userService.getUser(id, request.getHeader(AUTH_HEADER));
         List<Phone> phones = phoneService.getPhones(user);
 

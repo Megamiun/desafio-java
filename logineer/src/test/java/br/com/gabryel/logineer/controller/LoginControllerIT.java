@@ -3,6 +3,7 @@ package br.com.gabryel.logineer.controller;
 import br.com.gabryel.logineer.LogineerApplication;
 import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.entities.User;
+import br.com.gabryel.logineer.exceptions.LogineerException;
 import br.com.gabryel.logineer.repository.PhoneRepository;
 import br.com.gabryel.logineer.repository.UserRepository;
 import br.com.gabryel.logineer.service.TimeProvider;
@@ -311,18 +312,6 @@ public class LoginControllerIT {
     }
 
     /**
-     * Creates a basic user, with the password correctly transformed already.
-     *
-     * @param name     Name of the user
-     * @param email    Email of the user
-     * @param password Password of the user
-     * @return Instance of user
-     */
-    private User createBaseUser(String name, String email, String password) {
-        return userService.convertToUser(new UserDto(name, email, password));
-    }
-
-    /**
      * Register user given on file on the day 2018-05-25 at 12:12, created to help
      * testing last login status.
      *
@@ -330,8 +319,9 @@ public class LoginControllerIT {
      * @return User entity registered at the system
      * @throws IOException        see {@link LoginControllerIT#getText}
      * @throws URISyntaxException see {@link LoginControllerIT#getText}
+     * @throws LogineerException A system exception, should not happen
      */
-    private User registerUserFromFile(String fileName) throws IOException, URISyntaxException {
+    private User registerUserFromFile(String fileName) throws IOException, URISyntaxException, LogineerException {
         ObjectMapper mapper = new ObjectMapper()
             .registerModule(new KotlinModule())
             .registerModule(new JavaTimeModule());
