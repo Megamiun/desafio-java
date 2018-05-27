@@ -136,7 +136,7 @@ public class LoginControllerIT {
         LocalDate date = LocalDate.of(2018, Month.MAY, 25);
         LocalDateTime time = date.atStartOfDay();
 
-        User user = createBaseUser("Jão", "joao@silva.org", "myPass");
+        User user = createBaseUser("Jão", "joao@silva.org", "hunter2");
         user.setToken("MyToken");
         user.setCreated(date);
         user.setModified(date);
@@ -175,18 +175,18 @@ public class LoginControllerIT {
         mockMvc.perform(
             post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(getText("joao-da-silva-login.json")))
-            .andExpect(jsonPath("message", is("Usuário e/ou senha inválidos")));
+                .content(getText("joao-da-silva-login-wrong-pass.json")))
+            .andExpect(jsonPath("mensagem", is("Usuário e/ou senha inválidos")));
     }
 
     @Test
     public void givenAnLoginDtoOfAnUserWithWrongPassword_whenRequestedLogin_thenReturnsUnauthorized() throws Exception {
-        registerUserFromFile("joao-da-silva.json");
+        User user = registerUserFromFile("joao-da-silva.json");
 
         mockMvc.perform(
             post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(getText("joao-da-silva-login.json")))
+                .content(getText("joao-da-silva-login-wrong-pass.json")))
             .andExpect(status().isUnauthorized());
     }
 
@@ -196,7 +196,7 @@ public class LoginControllerIT {
             post("/api/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getText("joao-da-silva-login.json")))
-            .andExpect(jsonPath("message", is("Usuário e/ou senha inválidos")));
+            .andExpect(jsonPath("mensagem", is("Usuário e/ou senha inválidos")));
     }
 
     @Test
@@ -223,7 +223,7 @@ public class LoginControllerIT {
 
         mockMvc
             .perform(get("/api/user/" + user.getId()))
-            .andExpect(jsonPath("message", is("Não autorizado")));
+            .andExpect(jsonPath("mensagem", is("Não autorizado")));
     }
 
     @Test
@@ -245,7 +245,7 @@ public class LoginControllerIT {
             get("/api/user/" + user.getId())
                 .header("access_token", "invalid_token")
                 .header("token_type", "Bearer"))
-            .andExpect(jsonPath("message", is("Não autorizado")));
+            .andExpect(jsonPath("mensagem", is("Não autorizado")));
     }
 
     @Test
@@ -271,7 +271,7 @@ public class LoginControllerIT {
             get("/api/user/" + user.getId())
                 .header("access_token", user.getToken())
                 .header("token_type", "Bearer"))
-            .andExpect(jsonPath("message", is("Sessão Inválida")));
+            .andExpect(jsonPath("mensagem", is("Sessão Inválida")));
     }
 
     @Test

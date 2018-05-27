@@ -3,12 +3,16 @@ package br.com.gabryel.logineer.controller;
 import br.com.gabryel.logineer.dto.LoginDto;
 import br.com.gabryel.logineer.dto.UserDto;
 import br.com.gabryel.logineer.dto.UserTokenDto;
+import br.com.gabryel.logineer.entities.Phone;
 import br.com.gabryel.logineer.entities.User;
+import br.com.gabryel.logineer.service.PhoneService;
 import br.com.gabryel.logineer.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("api")
@@ -16,9 +20,12 @@ public class LoginController {
 
     private static Logger log = LoggerFactory.getLogger(LoginController.class);
 
+    private final PhoneService phoneService;
+
     private final UserService userService;
 
-    public LoginController(UserService userService) {
+    public LoginController(PhoneService phoneService, UserService userService) {
+        this.phoneService = phoneService;
         this.userService = userService;
     }
 
@@ -31,10 +38,10 @@ public class LoginController {
 
     @PostMapping("login")
     public ResponseEntity<UserTokenDto> login(@RequestBody LoginDto loginDto) {
-        log.info(loginDto.toString());
+        User user = userService.login(loginDto.getEmail(), loginDto.getPassword());
+        List<Phone> phones = phoneService.getPhones(user);
 
-        UserDto userDto = new UserDto("unnamed", loginDto.getEmail(), loginDto.getPassword());
-        return createUser(userDto);
+        return ResponseEntity.ok(UserTokenDto.of(user, phones));
     }
 
     @GetMapping("user/{id}")
