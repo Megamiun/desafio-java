@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
+
 import java.util.List;
 
 @RestController
@@ -30,14 +32,14 @@ public class LoginController {
     }
 
     @PutMapping("user")
-    public ResponseEntity<UserTokenDto> createUser(@RequestBody UserDto userDto) throws LogineerException {
+    public ResponseEntity<UserTokenDto> createUser(@Valid @RequestBody UserDto userDto) throws LogineerException {
         User user = userService.register(userDto);
 
         return ResponseEntity.ok(UserTokenDto.of(user, userDto));
     }
 
     @PostMapping("login")
-    public ResponseEntity<UserTokenDto> login(@RequestBody LoginDto loginDto) throws LogineerException {
+    public ResponseEntity<UserTokenDto> login(@Valid @RequestBody LoginDto loginDto) throws LogineerException {
         User user = userService.login(loginDto.getEmail(), loginDto.getPassword());
         List<Phone> phones = phoneService.getPhones(user);
 
