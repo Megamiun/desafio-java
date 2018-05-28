@@ -31,8 +31,9 @@ targetCompatibility = 1.8
 
 dependencies {
     implementation "org.springframework.boot:spring-boot-starter-data-jpa"
-    implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springframework.security:spring-security-crypto:5.0.5.RELEASE"
     implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation 'com.auth0:java-jwt:3.3.0'
     implementation "org.hsqldb:hsqldb"
 
     implementation "com.fasterxml.jackson.module:jackson-module-kotlin"

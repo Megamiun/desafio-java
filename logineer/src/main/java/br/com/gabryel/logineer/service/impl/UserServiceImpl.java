@@ -6,6 +6,7 @@ import br.com.gabryel.logineer.exceptions.LogineerException;
 import br.com.gabryel.logineer.repository.UserRepository;
 import br.com.gabryel.logineer.service.PhoneService;
 import br.com.gabryel.logineer.service.TimeProvider;
+import br.com.gabryel.logineer.service.TokenManager;
 import br.com.gabryel.logineer.service.UserService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,11 +28,14 @@ public class UserServiceImpl implements UserService {
 
     private final PasswordEncoder encoder;
 
-    public UserServiceImpl(UserRepository userRepository, PhoneService phoneService, TimeProvider timeProvider, PasswordEncoder encoder) {
+    private final TokenManager tokenManager;
+
+    public UserServiceImpl(UserRepository userRepository, PhoneService phoneService, TimeProvider timeProvider, PasswordEncoder encoder, TokenManager tokenManager) {
         this.userRepository = userRepository;
         this.phoneService = phoneService;
         this.timeProvider = timeProvider;
         this.encoder = encoder;
+        this.tokenManager = tokenManager;
     }
 
     @Override
@@ -56,6 +60,8 @@ public class UserServiceImpl implements UserService {
 
         User user = optionalUser.get();
         user.setLastLogin(timeProvider.now());
+        user.setToken(tokenManager.createToken(user.getId(), user.getEmail(), user.getLastLogin()));
+        userRepository.save(user);
         return user;
     }
 
@@ -102,9 +108,10 @@ public class UserServiceImpl implements UserService {
 
         String uuid = UUID.randomUUID().toString();
         String password = encoder.encode(userDto.getPassword());
+        String token = tokenManager.createToken(uuid, userDto.getEmail(), now);
 
         return new User(uuid, today, today, now, userDto.getName(),
-            userDto.getEmail(), password, uuid);
+            userDto.getEmail(), password, token);
     }
 
     private LogineerException unacceptableException(String message) {

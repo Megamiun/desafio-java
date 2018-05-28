@@ -61,7 +61,7 @@ public class LoginControllerProfileIT extends LoginControllerBaseIT {
 
         mockMvc.perform(
             get("/api/user/" + user.getId())
-                .header("Authorization", "Bearer I-m-a-bear"))
+                .header("Authorization", "Bearer " + user.getToken()))
             .andExpect(status().isUnauthorized());
     }
 

@@ -69,10 +69,3 @@ Todas as mensagens de erro devem ter o formato:
 * JWT como token
 * Testes unitários
 * Criptogafia não reversível (hash) na senha e no token
-
-## TODO - Coisas que eu ainda quero/preciso fazer antes de entregar
-* Trocar pra JWT
-* Tentar usar JWT para validação de data ao invés do campo do db
-* Estudar correção do Spring Security
-* Ver de subir na AWS
-* Testar casos de campos nulos ou envio de dados mal formatados

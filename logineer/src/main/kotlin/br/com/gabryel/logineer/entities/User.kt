@@ -3,6 +3,7 @@ package br.com.gabryel.logineer.entities
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.*
+import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
 
@@ -15,5 +16,7 @@ data class User(
     var name: String? = null,
     var email: String? = null,
     var password: String? = null,
+
+    @Column(length = 512)
     var token: String? = null
 )
