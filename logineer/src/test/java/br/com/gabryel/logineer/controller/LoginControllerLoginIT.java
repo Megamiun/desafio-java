@@ -1,6 +1,7 @@
 package br.com.gabryel.logineer.controller;
 
 import br.com.gabryel.logineer.entities.User;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.springframework.http.MediaType;
 
@@ -8,6 +9,7 @@ import java.time.LocalDateTime;
 import java.time.Month;
 
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -42,8 +44,9 @@ public class LoginControllerLoginIT extends LoginControllerBaseIT {
             .andExpect(jsonPath("created", is("2018-05-25")))
             .andExpect(jsonPath("modified", is("2018-05-25")))
             .andExpect(jsonPath("last_login", is("2018-05-25T12:43:00")))
-            .andExpect(jsonPath("token", is(user.getToken())))
+            .andExpect(jsonPath("token", is(not(user.getToken()))))
             .andExpect(jsonPath("id", is(user.getId())));
+
     }
 
     @Test
